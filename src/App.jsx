@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef } from "react"
 import clients from './Data/clients.json'
+import clients_alternative from './Data/selectedClients.json'
 import PrintContainer from "./Components/PrintContainer"
 
 export default function App () {
   const searchTimeoutRef = useRef(null)
+  const selectedClients = clients_alternative
   const [articles, setArticles] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [searchSecondTerm, setSearchSecondTerm] = useState('')
+  const [searchSelectedClient, setSearchSelectedClient] = useState('')
   const [printMode, setPrintMode] = useState(false)
   const [searchResults, setSearchResults] = useState([])
   const [selectedArticles, setSelectedArticles] = useState([])
@@ -46,6 +50,10 @@ export default function App () {
     .catch(e => console.error(e))
   },[])
 
+  useEffect(()=> {
+    console.log(data.id)
+  },[data.id])
+
   const handleChange = (e) => {
     const { id, value } = e.target
     setData(prevData => ({
@@ -80,6 +88,38 @@ export default function App () {
     }, 250)
   }
 
+  const handleSelectedClient = (e) => {
+    const value = e.target.value
+    setSearchSecondTerm(value)
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+    
+    searchTimeoutRef.current = setTimeout(() => {
+      const selectedClient = selectedClients.find(client => client.id === value);
+    
+      if (selectedClient) { handleSecondClientSelect(selectedClient) } 
+      else { alert('No se encontro cliente!') }
+    }, 250) 
+  }
+  
+  const handleSecondClientSelect = (selectedClient) => {
+    setData({
+      ...data,
+      cliente: selectedClient.razon_social,
+      domicilio: selectedClient.domicilio,
+      ciudad: selectedClient.ciudad,
+      provincia: selectedClient.provincia,
+      cond_fiscal: selectedClient.clase_fiscal,
+      cuit: selectedClient.documento,
+      dom_entrega: selectedClient.domicilio,
+      tel: '',
+    })
+    setSearchSecondTerm('')
+    setSearchSelectedClient([])
+  }
+
   const handleClientSelect = (client) => {
     setData({
       id: client.id,
@@ -100,6 +140,18 @@ export default function App () {
     setSearchTerm('')
     setSearchResults([])
   }
+
+  // const handleSecondKeyPress = (e) => {
+  //   if (e.key === 'Enter') {
+  //     const client = selectedClients.find(client => client.id === searchSecondTerm)
+  //     if (client) {
+  //       handleSecondClientSelect(client)
+  //     } 
+  //     else {
+  //       alert('No se ha encontrado cliente')
+  //     }
+  //   }
+  // }
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
@@ -248,23 +300,35 @@ export default function App () {
   }
 
   return (
-    <main className="flex w-svw min-h-screen justify-center items-center flex-col bg-[#161f27] text-white">
+    <main className="flex w-full gap-y-10 min-h-screen justify-center items-center flex-col bg-[#161f27] text-white">
       <div className="flex flex-col w-3/4 gap-5 min-h-[500px] border-4 border-white rounded-xl p-5">
         {/*Search client section*/}
         <section className="flex justify-around">
           <article className="flex gap-5 flex-col relative">
             <h1 className="w-full"><b>Buscar cliente</b> (ingresar numero o nombre o CUIL/CUIT/DNI y luego enter para traer datos)</h1>
             <div className="flex gap-x-5">
-              <div className="flex h-[50px] gap-x-2 items-center justify-center">
-                <label className="w-[130px]" htmlFor="search">Buscar cliente:</label>
-                <input onChange={handleSearch} className="w-[400px]" onKeyPress={handleKeyPress} value={searchTerm} id="search" type="text" />
+              <div className="flex h-[50px] items-center justify-center">
+                <label className="w-[100px]" htmlFor="search">Buscar cliente:</label>
+                <input onChange={handleSearch} className="w-[100px]" onKeyPress={handleKeyPress} value={searchTerm} id="search" type="text" />
               </div>
 
-              <div className="flex h-[50px] gap-x-2 items-center justify-center">
-                <label className="w-[100px]" htmlFor="fecha">Fecha:</label>
+              <div className="flex h-[50px] items-center justify-center">
+                <label className="w-[50px]" htmlFor="fecha">Fecha:</label>
                 <input onChange={handleChange} value={data.fecha} id="fecha" type="date"/>
               </div>
+   
+              <div className="flex h-[50px] items-center justify-center">
+                <label className="w-[120px]" htmlFor="search-2">Cliente alternativo:</label>
+                <select onChange={handleSelectedClient} disabled={!data.id} className={`${!data.id ? 'cursor-not-allowed' : ''}`}>
+                  <option value="" selected disabled>Seleccione una opcion</option>
+                  {selectedClients.map(client => (
+                    <option key={client.id} value={client.id}>{client.id} {client.razon_social}</option>
+                  ))}
+                </select>
+                {/* <input onChange={handleSelectedClient} className="w-[100px]" onKeyPress={handleSecondKeyPress} value={searchSecondTerm} id="search-2" type="text" /> */}
+              </div>
             </div>
+
 
             {/* {searchResults.length > 0
             ? ( 
@@ -289,7 +353,10 @@ export default function App () {
           <article className="flex gap-5 flex-col">
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="cliente">Cliente:</label>
-              <input onChange={handleChange} value={data.id + ' | ' + data.cliente} id="cliente" type="text" />
+              <div>
+                <input onChange={handleChange} className="w-[60px] text-center rounded-r-[0px]" value={data.id} id="cliente-1" type="text"></input>
+                <input onChange={handleChange} className="w-[130px] rounded-l-[0px]" value={data.cliente} id="cliente-3" type="text" />
+              </div>
             </div> 
 
             <div className="flex h-[50px] gap-x-2 items-center justify-center">

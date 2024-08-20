@@ -10,7 +10,7 @@ b {
   font-size: 17px;
 }
 
-input {
+input, select {
   padding: 3px 10px;
   color: black;
   border-radius: 5px;

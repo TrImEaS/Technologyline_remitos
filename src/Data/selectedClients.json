@@ -1,0 +1,22 @@
+[
+  {
+    "id": "47641",
+    "razon_social": "INFLABLES WORLD S.A",
+    "domicilio": "BERUTTI 1704",
+    "ciudad": "VILLA MAIPU",
+    "provincia": "Buenos Aires",
+    "clase_fiscal": "Arg. Consumidor Final",
+    "documento": "30712316655",
+    "tel": "+54116700607432"
+  },
+  {
+    "id": "212",
+    "razon_social": "VIDEGAU",
+    "domicilio": "CAPITAN BERMUDEZ 2305",
+    "ciudad": "Olivos",
+    "provincia": "Buenos Aires",
+    "clase_fiscal": "Arg. Consumidor Final",
+    "documento": "30-71701118-6",
+    "tel": "1150609607"
+  }
+]
