@@ -113,7 +113,6 @@ export default function App () {
       provincia: selectedClient.provincia,
       cond_fiscal: selectedClient.clase_fiscal,
       cuit: selectedClient.documento,
-      dom_entrega: selectedClient.domicilio,
       tel: '',
     })
     setSearchSecondTerm('')
@@ -134,8 +133,8 @@ export default function App () {
       fecha: new Date().toISOString().split('T')[0],
       nro_factura: '',
       punto_venta: '',
-      dom_entrega: client.domicilio,
-      tel: '',
+      dom_entrega: client.dom_env || '',
+      tel: client.celular || '',
     })
     setSearchTerm('')
     setSearchResults([])
@@ -172,10 +171,9 @@ export default function App () {
           provincia: "",
           razon_social: "",
           tipo_documento: "",
+          celular: '',
+          dom_env: '',
           tipo_moneda: "",
-          ultima_fecha_modificacion: "",
-          usuario_creado_por: "",
-          usuario_ultima_modificacion: "",
           vendedor: ""
         })
         alert('No se ha encontrado cliente')
