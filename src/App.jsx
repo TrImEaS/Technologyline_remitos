@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react"
-import clients from './Data/clients.json'
 import clients_alternative from './Data/selectedClients.json'
 import PrintContainer from "./Components/PrintContainer"
 
@@ -8,11 +7,9 @@ export default function App () {
   const selectedClients = clients_alternative
   const [articles, setArticles] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [searchSecondTerm, setSearchSecondTerm] = useState('')
-  const [searchSelectedClient, setSearchSelectedClient] = useState('')
   const [printMode, setPrintMode] = useState(false)
-  const [searchResults, setSearchResults] = useState([])
   const [selectedArticles, setSelectedArticles] = useState([])
+  const [alternativeClientSelect, setAlternativeClientSelect] = useState('')
   const [data, setData] = useState({
     id: '',
     cliente: '',
@@ -50,10 +47,6 @@ export default function App () {
     .catch(e => console.error(e))
   },[])
 
-  useEffect(()=> {
-    console.log(data.id)
-  },[data.id])
-
   const handleChange = (e) => {
     const { id, value } = e.target
     setData(prevData => ({
@@ -62,35 +55,9 @@ export default function App () {
     }))
   }
   
-  const handleSearch = (e) => {
-    const value = e.target.value
-    setSearchTerm(value)
-
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
-    }
-    
-    searchTimeoutRef.current = setTimeout(() => {
-      if (value) {
-        const results = clients.clientes.filter(client =>
-          client.documento && 
-          client.razon_social &&
-          (
-            client.id.includes(value) ||
-            client.razon_social.toLowerCase().includes(value.toLowerCase()) ||
-            client.documento.includes(value)
-          )
-        )
-        setSearchResults(results)
-      } else {
-        setSearchResults([])
-      }
-    }, 250)
-  }
-
   const handleSelectedClient = (e) => {
     const value = e.target.value
-    setSearchSecondTerm(value)
+    setAlternativeClientSelect(value)
 
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
@@ -115,8 +82,6 @@ export default function App () {
       cuit: selectedClient.documento,
       tel: '',
     })
-    setSearchSecondTerm('')
-    setSearchSelectedClient([])
   }
 
   const handleClientSelect = (client) => {
@@ -137,28 +102,11 @@ export default function App () {
       tel: client.celular || '',
     })
     setSearchTerm('')
-    setSearchResults([])
   }
 
-  // const handleSecondKeyPress = (e) => {
-  //   if (e.key === 'Enter') {
-  //     const client = selectedClients.find(client => client.id === searchSecondTerm)
-  //     if (client) {
-  //       handleSecondClientSelect(client)
-  //     } 
-  //     else {
-  //       alert('No se ha encontrado cliente')
-  //     }
-  //   }
-  // }
-
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      const client = clients.clientes.find(client => client.id === searchTerm)
-      if (client) {
-        handleClientSelect(client)
-      } 
-      else {
+    try {
+      if (!searchTerm) {
         handleClientSelect({
           ciudad: "",
           clase_fiscal: "",
@@ -176,33 +124,47 @@ export default function App () {
           tipo_moneda: "",
           vendedor: ""
         })
-        alert('No se ha encontrado cliente')
       }
-    }
-  }
 
-  const handleArticleSearch = (e) => {
-    const value = e.target.value
-    setArticleData(prevArticleData => ({
-      ...prevArticleData,
-      sku: value
-    }))
-  
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
-    }
-  
-    searchTimeoutRef.current = setTimeout(() => {
-      if (value) {
-        const results = articles.filter(article =>
-          article.sku.toLowerCase().includes(value.toLowerCase()) ||
-          article.name.toLowerCase().includes(value.toLowerCase())
-        )
-        setSearchResults(results)
-      } else {
-        setSearchResults([])
+      if (e.key === 'Enter' && searchTerm) {
+        fetch(`https://technologyline.com.ar/api/admin/remitos/clients?id=${parseInt(searchTerm)}`)
+          .then(res => { 
+            if(!res.ok){
+              throw new Error('Error al traer articulos')
+            }
+
+            return res.json()
+          })
+          .then(data => {
+            if(!data[0] || data[0] === undefined) {
+              handleClientSelect({
+                ciudad: "",
+                clase_fiscal: "",
+                documento: "",
+                domicilio: "",
+                fecha_alta: "",
+                id: "",
+                inactivo: false,
+                pais: "",
+                provincia: "",
+                razon_social: "",
+                tipo_documento: "",
+                celular: '',
+                dom_env: '',
+                tipo_moneda: "",
+                vendedor: ""
+              })
+              alert('No se ha encontrado cliente')
+            }
+
+            handleClientSelect(data[0])
+          })
+          .catch(e => console.error(e))
       }
-    }, 250)
+    } 
+    catch (e) {
+      throw new Error('Error al traer cliente', e)
+    }
   }
 
   const handleArticleKeyPress = (e) => {
@@ -307,18 +269,18 @@ export default function App () {
             <div className="flex gap-x-5">
               <div className="flex h-[50px] items-center justify-center">
                 <label className="w-[100px]" htmlFor="search">Buscar cliente:</label>
-                <input onChange={handleSearch} className="w-[100px]" onKeyPress={handleKeyPress} value={searchTerm} id="search" type="text" />
+                <input onChange={(e)=> setSearchTerm(e.target.value)} className="w-[100px]" onKeyDown={handleKeyPress} value={searchTerm || ''} id="search" type="text" />
               </div>
 
               <div className="flex h-[50px] items-center justify-center">
                 <label className="w-[50px]" htmlFor="fecha">Fecha:</label>
-                <input onChange={handleChange} value={data.fecha} id="fecha" type="date"/>
+                <input onChange={handleChange} value={data.fecha || ''} id="fecha" type="date"/>
               </div>
    
               <div className="flex h-[50px] items-center justify-center">
                 <label className="w-[120px]" htmlFor="search-2">Cliente alternativo:</label>
-                <select onChange={handleSelectedClient} disabled={!data.id} className={`${!data.id ? 'cursor-not-allowed' : ''}`}>
-                  <option value="" selected disabled>Seleccione una opcion</option>
+                <select onChange={handleSelectedClient} value={alternativeClientSelect} disabled={!data.id} className={`${!data.id ? 'cursor-not-allowed' : ''}`}>
+                  <option value="" disabled>Seleccione una opcion</option>
                   {selectedClients.map(client => (
                     <option key={client.id} value={client.id}>{client.id} {client.razon_social}</option>
                   ))}
@@ -326,23 +288,6 @@ export default function App () {
                 {/* <input onChange={handleSelectedClient} className="w-[100px]" onKeyPress={handleSecondKeyPress} value={searchSecondTerm} id="search-2" type="text" /> */}
               </div>
             </div>
-
-
-            {/* {searchResults.length > 0
-            ? ( 
-              <div className={`${!searchTerm || !searchResults.length === 0 ? 'hidden' : 'block'} h-[300px] w-[400px] min-h-[100px] top-[88px] left-[30%] absolute py-2 bg-[#202b38] border rounded-lg overflow-y-auto`}>
-                {searchResults.map((client, index) => (
-                  <div key={index} onClick={() => handleClientSelect(client)} className="flex flex-col gap-y-1 min-w-[250px] py-1 border-b border-gray-200 cursor-pointer group">
-                    <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Numero:</span> {client.id}</p>
-                    <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Razon social:</span> {client.razon_social}</p>
-                    <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Documento:</span> {client.documento}</p>
-                    <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Ciudad:</span> {client.ciudad}</p>
-                  </div>
-                ))}
-              </div>
-            ) 
-            : <h1 className={`${!searchTerm || !searchResults.length === 0 ? 'hidden' : 'block'} flex items-center px-4 h-[60px] w-[400px] top-[88px] left-[30%] absolute p-2 bg-[#202b38] border rounded-lg`}>No se han encontrado resultados.</h1>
-            } */}
           </article>
         </section>
 
@@ -352,68 +297,68 @@ export default function App () {
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="cliente">Cliente:</label>
               <div>
-                <input onChange={handleChange} className="w-[60px] text-center rounded-r-[0px]" value={data.id} id="cliente-1" type="text"></input>
-                <input onChange={handleChange} className="w-[130px] rounded-l-[0px]" value={data.cliente} id="cliente-3" type="text" />
+                <input onChange={handleChange} className="w-[60px] text-center rounded-r-[0px]" value={data.id || ''} id="cliente-1" type="text"></input>
+                <input onChange={handleChange} className="w-[130px] rounded-l-[0px]" value={data.cliente || ''} id="cliente-3" type="text" />
               </div>
             </div> 
 
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="domicilio">Domicilio:</label>
-              <input onChange={handleChange} value={data.domicilio} id="domicilio" type="text"/>
+              <input onChange={handleChange} value={data.domicilio || ''} id="domicilio" type="text"/>
             </div>
 
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="ciudad">Ciudad:</label>
-              <input onChange={handleChange} value={data.ciudad} id="ciudad" type="text"/>
+              <input onChange={handleChange} value={data.ciudad || ''} id="ciudad" type="text"/>
             </div>
 
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="provincia">Provincia:</label>
-              <input onChange={handleChange} value={data.provincia} id="provincia" type="text"/>
+              <input onChange={handleChange} value={data.provincia || ''} id="provincia" type="text"/>
             </div>
           </article>
 
           <article className="flex gap-5 flex-col">
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="cond_fiscal">Cond. fiscal:</label>
-              <input onChange={handleChange} value={data.cond_fiscal} id="cond_fiscal" type="text"/>
+              <input onChange={handleChange} value={data.cond_fiscal || ''} id="cond_fiscal" type="text"/>
             </div>
 
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="cuit">C.U.I.T:</label>
-              <input onChange={handleChange} value={data.cuit} id="cuit" type="text"/>
+              <input onChange={handleChange} value={data.cuit || ''} id="cuit" type="text"/>
             </div>
 
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="cond_venta">Cond. de venta:</label>
-              <input onChange={handleChange} value={data.cond_venta} id="cond_venta" type="text"/>
+              <input onChange={handleChange} value={data.cond_venta || ''} id="cond_venta" type="text"/>
             </div>
 
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="vendedor">Vendedor:</label>
-              <input onChange={handleChange} value={data.vendedor} id="vendedor" type="text"/>
+              <input onChange={handleChange} value={data.vendedor || ''} id="vendedor" type="text"/>
             </div>
           </article>
 
           <article className="flex gap-5 flex-col">
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="punto_venta">Punto de venta:</label>
-              <input onChange={handleChange} value={data.punto_venta} id="punto_venta" type="text"/>
+              <input onChange={handleChange} value={data.punto_venta || ''} id="punto_venta" type="text"/>
             </div>
 
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="nro_factura">Nro de Factura:</label>
-              <input onChange={handleChange} value={data.nro_factura} id="nro_factura" type="text"/>
+              <input onChange={handleChange} value={data.nro_factura || ''} id="nro_factura" type="text"/>
             </div>
 
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="dom_entrega">Dom. entrega:</label>
-              <input onChange={handleChange} value={data.dom_entrega} id="dom_entrega" type="text"/>
+              <input onChange={handleChange} value={data.dom_entrega || ''} id="dom_entrega" type="text"/>
             </div>
             
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[100px]" htmlFor="tel">Tel:</label>
-              <input onChange={handleChange} value={data.tel} id="tel" type="text"/>
+              <input onChange={handleChange} value={data.tel || ''} id="tel" type="text"/>
             </div>
           </article>
         </section>
@@ -424,29 +369,12 @@ export default function App () {
           <article className="flex justify-around relative">
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[130px]" htmlFor="sku">Agregar articulo:</label>
-              <input onChange={handleArticleSearch} className="w-[400px]" onKeyPress={handleArticleKeyPress} value={articleData.sku} id="sku" type="text" />
+              <input onChange={(e)=> setArticleData(prevArticleData => ({ ...prevArticleData, sku: e.target.value }))} className="w-[400px]" onKeyDown={handleArticleKeyPress} value={articleData.sku || ''} id="sku" type="text" />
             </div>
             <div className="flex h-[50px] gap-x-2 items-center justify-center">
               <label className="w-[130px]" htmlFor="valued">Valorizado:</label>
-              <input onChange={handleChange} className="w-full placeholder:text-[#555]" value={data.valued} id="valued" placeholder="Ej: 768967.35" type="number" />
+              <input onChange={handleChange} className="w-full placeholder:text-[#555]" value={data.valued || ''} id="valued" placeholder="Ej: 768967.35" type="number" />
             </div>
-          {/* 
-            {searchResults.length > 0
-            ? ( 
-              <div className={`${!articleData.sku || !searchResults.length === 0 ? 'hidden' : 'block'} h-[200px] w-[400px] min-h-[100px] top-[43px] left-[36.8%] absolute z-20 py-2 bg-[#202b38] border rounded-lg overflow-y-auto`}>
-                {searchResults.map((article, index) => (
-                  <div key={index} onClick={() => handleArticleSelect(article)} className="flex flex-col gap-y-1 min-w-[250px] py-1 border-b border-gray-200 cursor-pointer group">
-                    <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">SKU:</span> {article.sku}</p>
-                    <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Descripción:</span> {article.name}</p>
-                  </div>
-                ))}
-              </div>
-            ) 
-            : <h1 className={`${!articleData.sku || !searchResults.length === 0 ? 'hidden' : 'block'} flex items-center px-4 h-[60px] w-[400px] top-[43px] left-[36.8%] absolute p-2 bg-[#202b38] border rounded-lg`}>
-                No se han encontrado resultados.
-              </h1>
-            } 
-          */}
           </article>
 
           <article className="flex flex-col gap-2">
@@ -455,12 +383,12 @@ export default function App () {
                 <article className="flex w-full gap-x-5">
                   <div className="flex h-[50px] items-center justify-center">
                     <label className="w-[50px]" htmlFor={`sku-${index}`}>SKU:</label>
-                    <input className="w-[150px]" value={article.sku} id={`sku-${index}`} type="text" readOnly />
+                    <input className="w-[150px]" value={article.sku || ''} id={`sku-${index}`} type="text" readOnly />
                   </div>
 
                   <div className="flex h-[50px] gap-x-2 items-center justify-center">
                     <label className="w-[70px]" htmlFor={`quantity-${index}`}>Cantidad:</label>
-                    <input className="w-[150px]" value={article.quantity} id={`quantity-${index}`} type="number" onChange={(e) => handleQuantityChange(index, e.target.value)} />
+                    <input className="w-[150px]" value={article.quantity || ''} id={`quantity-${index}`} type="number" onChange={(e) => handleQuantityChange(index, e.target.value)} />
                   </div>
 
                   <button className="absolute right-1 w-[25px] h-[25px] duration-300 rounded-full bg-red-500 text-white font-bold flex items-center justify-center" onClick={() => handleDeleteArticle(index)}>X</button>
@@ -469,7 +397,7 @@ export default function App () {
                 <article className="flex w-full">
                   <div className="flex h-[50px] gap-x-2 items-center w-full justify-center">
                     <label className="w-[100px]" htmlFor={`description-${index}`}>Descripción:</label>
-                    <input className='w-full' value={article.name} id={`description-${index}`} type="text" readOnly />
+                    <input className='w-full' value={article.name || ''} id={`description-${index}`} type="text" readOnly />
                   </div>
                 </article>
               </section>
@@ -485,3 +413,37 @@ export default function App () {
     </main>
   )
 } 
+
+/* 
+  {searchResults.length > 0
+  ? ( 
+    <div className={`${!articleData.sku || !searchResults.length === 0 ? 'hidden' : 'block'} h-[200px] w-[400px] min-h-[100px] top-[43px] left-[36.8%] absolute z-20 py-2 bg-[#202b38] border rounded-lg overflow-y-auto`}>
+      {searchResults.map((article, index) => (
+        <div key={index} onClick={() => handleArticleSelect(article)} className="flex flex-col gap-y-1 min-w-[250px] py-1 border-b border-gray-200 cursor-pointer group">
+          <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">SKU:</span> {article.sku}</p>
+          <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Descripción:</span> {article.name}</p>
+        </div>
+      ))}
+    </div>
+  ) 
+  : <h1 className={`${!articleData.sku || !searchResults.length === 0 ? 'hidden' : 'block'} flex items-center px-4 h-[60px] w-[400px] top-[43px] left-[36.8%] absolute p-2 bg-[#202b38] border rounded-lg`}>
+      No se han encontrado resultados.
+    </h1>
+  } 
+*/
+
+/* {searchResults.length > 0
+? ( 
+  <div className={`${!searchTerm || !searchResults.length === 0 ? 'hidden' : 'block'} h-[300px] w-[400px] min-h-[100px] top-[88px] left-[30%] absolute py-2 bg-[#202b38] border rounded-lg overflow-y-auto`}>
+    {searchResults.map((client, index) => (
+      <div key={index} onClick={() => handleClientSelect(client)} className="flex flex-col gap-y-1 min-w-[250px] py-1 border-b border-gray-200 cursor-pointer group">
+        <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Numero:</span> {client.id}</p>
+        <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Razon social:</span> {client.razon_social}</p>
+        <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Documento:</span> {client.documento}</p>
+        <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Ciudad:</span> {client.ciudad}</p>
+      </div>
+    ))}
+  </div>
+) 
+: <h1 className={`${!searchTerm || !searchResults.length === 0 ? 'hidden' : 'block'} flex items-center px-4 h-[60px] w-[400px] top-[88px] left-[30%] absolute p-2 bg-[#202b38] border rounded-lg`}>No se han encontrado resultados.</h1>
+} */
