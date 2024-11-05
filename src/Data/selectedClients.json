@@ -18,5 +18,25 @@
     "clase_fiscal": "Arg. Consumidor Final",
     "documento": "30-71701118-6",
     "tel": "1150609607"
+  },
+  {
+    "id": "1",
+    "razon_social": "MAFFEI LAURA ELENA",
+    "domicilio": "AV. CERVIÑO 3375",
+    "ciudad": "CABA",
+    "provincia": "Buenos Aires",
+    "clase_fiscal": "Responsable Inscripto",
+    "documento": "27-12548217-7",
+    "tel": ""
+  },
+  {
+    "id": "2",
+    "razon_social": "HMS GROUP S.A.S",
+    "domicilio": "QUESADA 6057 DEPTO 107, CP 1425",
+    "ciudad": "CABA",
+    "provincia": "Buenos Aires",
+    "clase_fiscal": "Responsable Inscripto",
+    "documento": "30-71624932-4",
+    "tel": "1150294071"
   }
 ]
