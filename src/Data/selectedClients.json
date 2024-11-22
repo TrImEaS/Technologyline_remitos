@@ -38,5 +38,15 @@
     "clase_fiscal": "Responsable Inscripto",
     "documento": "30-71624932-4",
     "tel": "1150294071"
+  },
+  {
+    "id": "3636",
+    "razon_social": "CICIARELLO GUIDO FRANCISCO",
+    "domicilio": "ARENALES 3767, Piso: 7, Dpto: 7, CP: 1425",
+    "ciudad": "CABA",
+    "provincia": "Buenos Aires",
+    "clase_fiscal": "Responsable Inscripto",
+    "documento": "20-32699655-7",
+    "tel": ""
   }
 ]
