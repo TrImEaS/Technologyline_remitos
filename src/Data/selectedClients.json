@@ -48,5 +48,25 @@
     "clase_fiscal": "Responsable Inscripto",
     "documento": "20-32699655-7",
     "tel": ""
+  },
+  {
+    "id": "",
+    "razon_social": "SARJUR S.A.",
+    "domicilio": "CORDOBA AV. 1873, CP: 1120",
+    "ciudad": "CABA",
+    "provincia": "Buenos Aires",
+    "clase_fiscal": "SOC. ANONIMA",
+    "documento": "30-71407940-5",
+    "tel": ""
+  },
+  {
+    "id": "53000",
+    "razon_social": "CABLEFUSION S.A.",
+    "domicilio": "24 3824 BERAZATEGUI, CP: 1884",
+    "ciudad": "CABA",
+    "provincia": "Buenos Aires",
+    "clase_fiscal": "SOC. ANONIMA",
+    "documento": "33-71625574-9",
+    "tel": ""
   }
 ]
