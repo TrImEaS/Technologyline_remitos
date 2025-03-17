@@ -68,5 +68,15 @@
     "clase_fiscal": "SOC. ANONIMA",
     "documento": "33-71625574-9",
     "tel": ""
+  },
+  {
+    "id": "3176",
+    "razon_social": "RIVEROS CABAÑAS",
+    "domicilio": "24 3824",
+    "ciudad": "Berazategui",
+    "provincia": "Buenos Aires",
+    "clase_fiscal": "IVA Responsable Inscripto",
+    "documento": "20-94886099-7",
+    "tel": "011"
   }
 ]
