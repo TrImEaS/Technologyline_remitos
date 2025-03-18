@@ -51,7 +51,10 @@ export default function App () {
     const { id, value } = e.target
     setData(prevData => ({
       ...prevData,
-      [id]: value
+      // Handle special cases for cliente inputs
+      [id === 'cliente-1' ? 'id' : 
+       id === 'cliente-3' ? 'cliente' : 
+       id]: value
     }))
   }
   
@@ -412,38 +415,4 @@ export default function App () {
       </div>
     </main>
   )
-} 
-
-/* 
-  {searchResults.length > 0
-  ? ( 
-    <div className={`${!articleData.sku || !searchResults.length === 0 ? 'hidden' : 'block'} h-[200px] w-[400px] min-h-[100px] top-[43px] left-[36.8%] absolute z-20 py-2 bg-[#202b38] border rounded-lg overflow-y-auto`}>
-      {searchResults.map((article, index) => (
-        <div key={index} onClick={() => handleArticleSelect(article)} className="flex flex-col gap-y-1 min-w-[250px] py-1 border-b border-gray-200 cursor-pointer group">
-          <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">SKU:</span> {article.sku}</p>
-          <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Descripción:</span> {article.name}</p>
-        </div>
-      ))}
-    </div>
-  ) 
-  : <h1 className={`${!articleData.sku || !searchResults.length === 0 ? 'hidden' : 'block'} flex items-center px-4 h-[60px] w-[400px] top-[43px] left-[36.8%] absolute p-2 bg-[#202b38] border rounded-lg`}>
-      No se han encontrado resultados.
-    </h1>
-  } 
-*/
-
-/* {searchResults.length > 0
-? ( 
-  <div className={`${!searchTerm || !searchResults.length === 0 ? 'hidden' : 'block'} h-[300px] w-[400px] min-h-[100px] top-[88px] left-[30%] absolute py-2 bg-[#202b38] border rounded-lg overflow-y-auto`}>
-    {searchResults.map((client, index) => (
-      <div key={index} onClick={() => handleClientSelect(client)} className="flex flex-col gap-y-1 min-w-[250px] py-1 border-b border-gray-200 cursor-pointer group">
-        <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Numero:</span> {client.id}</p>
-        <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Razon social:</span> {client.razon_social}</p>
-        <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Documento:</span> {client.documento}</p>
-        <p className="text-sm group-hover:text-white group-hover:font-bold duration-200 px-2"><span className="font-bold text-gray-300">Ciudad:</span> {client.ciudad}</p>
-      </div>
-    ))}
-  </div>
-) 
-: <h1 className={`${!searchTerm || !searchResults.length === 0 ? 'hidden' : 'block'} flex items-center px-4 h-[60px] w-[400px] top-[88px] left-[30%] absolute p-2 bg-[#202b38] border rounded-lg`}>No se han encontrado resultados.</h1>
-} */
+}
