@@ -78,5 +78,15 @@
     "clase_fiscal": "IVA Responsable Inscripto",
     "documento": "20-94886099-7",
     "tel": "011"
+  },
+  {
+    "id": "36724",
+    "razon_social": "PETRONACCI GUILLERMO MARIO",
+    "domicilio": "ECHEVERRIA 2505",
+    "ciudad": "SAN MARTIN, VILLA MAIPU",
+    "provincia": "Buenos Aires",
+    "clase_fiscal": "IVA Responsable Inscripto",
+    "documento": "23-29506314-9",
+    "tel": "011"
   }
 ]
