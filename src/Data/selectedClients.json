@@ -88,5 +88,15 @@
     "clase_fiscal": "IVA Responsable Inscripto",
     "documento": "23-29506314-9",
     "tel": "011"
+  },
+  {
+    "id": "47726",
+    "razon_social": "HACIENDAS CORRENTINAS SRL",
+    "domicilio": "AV JUAN BRANCHI 2305",
+    "ciudad": "LA CRUZ CORRIENTES",
+    "provincia": "CORRIENTES",
+    "clase_fiscal": "IVA Responsable Inscripto",
+    "documento": "30-70841735-8",
+    "tel": "011"
   }
 ]
