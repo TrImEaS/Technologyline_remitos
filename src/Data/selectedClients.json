@@ -98,5 +98,15 @@
     "clase_fiscal": "IVA Responsable Inscripto",
     "documento": "30-70841735-8",
     "tel": "011"
+  },
+  {
+    "id": "213",
+    "razon_social": "INTERNATIONAL TRENDS",
+    "domicilio": "OMBU 1247",
+    "ciudad": "FLORIDA",
+    "provincia": "Buenos Aires",
+    "clase_fiscal": "IVA Responsable Inscripto",
+    "documento": "30-71648897-3",
+    "tel": "011"
   }
 ]
