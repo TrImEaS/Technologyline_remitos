@@ -108,5 +108,15 @@
     "clase_fiscal": "IVA Responsable Inscripto",
     "documento": "30-71648897-3",
     "tel": "011"
+  },
+  {
+    "id": "188",
+    "razon_social": "AD SUPPLIER",
+    "domicilio": "BERUTTI 1704",
+    "ciudad": "VILLA MAIPU",
+    "provincia": "Buenos Aires",
+    "clase_fiscal": "Arg. I.V.A. Responsable Inscripto",
+    "documento": "30-71547223-2",
+    "tel": "011"
   }
 ]
