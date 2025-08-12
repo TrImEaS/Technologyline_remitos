@@ -1,6 +1,17 @@
 import { useState, useEffect, useRef } from "react"
 import clients_alternative from './Data/selectedClients.json'
 import PrintContainer from "./Components/PrintContainer"
+import ImportarClientesExcel from "./ImportarClientesExcel"
+
+// Nuevo: ícono SVG simple para el botón de agregar
+const PlusIcon = () => (
+  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+)
+
+const API_URL = //cambia según el entorno
+  import.meta.env.MODE === "production"
+    ? import.meta.env.VITE_API_URL_PROD
+    : import.meta.env.VITE_API_URL_DEV || "http://localhost:808";
 
 export default function App () {
   const searchTimeoutRef = useRef(null)
@@ -33,6 +44,55 @@ export default function App () {
     description: '',
   })
 
+  const [showAddClientModal, setShowAddClientModal] = useState(false)
+  const [addClientLoading, setAddClientLoading] = useState(false)
+  const [addClientError, setAddClientError] = useState('')
+  const [addClientSuccess, setAddClientSuccess] = useState('')
+  const [addClientForm, setAddClientForm] = useState({
+    razon_social: '',
+    domicilio: '',
+    ciudad: '',
+    provincia: '',
+    clase_fiscal: '',
+    documento: '',
+    tel: '', 
+    numero_cliente: '', // puede ser nulo
+  })
+  const [showAdminModal, setShowAdminModal] = useState(false)
+  const [allClients, setAllClients] = useState([])
+  const [loadingAllClients, setLoadingAllClients] = useState(false)
+  const [errorAllClients, setErrorAllClients] = useState('')
+
+  // Fetch solo los activados para el select
+  const [selectedClientsState, setSelectedClientsState] = useState([])
+  useEffect(() => {
+    fetch(`${API_URL}/api/admin/cliente-especial-activos`)
+      .then(res => {
+        if (!res.ok) throw new Error('Error al traer clientes especiales activos')
+        return res.json()
+      })
+      .then(data => {
+        setSelectedClientsState(Array.isArray(data) ? data : [])
+      })
+      .catch(e => console.error(e))
+  }, [API_URL])
+
+  // Fetch todos para el modal de administración
+  const fetchAllClients = () => {
+    setLoadingAllClients(true)
+    setErrorAllClients('')
+    fetch(`${API_URL}/api/admin/cliente-especial`)
+      .then(res => {
+        if (!res.ok) throw new Error('Error al traer todos los clientes especiales')
+        return res.json()
+      })
+      .then(data => {
+        setAllClients(Array.isArray(data) ? data : [])
+      })
+      .catch(e => setErrorAllClients(e.message))
+      .finally(() => setLoadingAllClients(false))
+  }
+
   useEffect(()=> {
     fetch('https://technologyline.com.ar/api/products?all=true')
     .then(res => { 
@@ -51,13 +111,49 @@ export default function App () {
     const { id, value } = e.target
     setData(prevData => ({
       ...prevData,
-      // Handle special cases for cliente inputs
       [id === 'cliente-1' ? 'id' : 
        id === 'cliente-3' ? 'cliente' : 
        id]: value
     }))
   }
   
+  const handleAddClientInputChange = (e) => {
+    const { name, value } = e.target
+    setAddClientForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  // Cuando se agrega un cliente especial, refrescar ambas listas
+  const handleAddClientSubmit = async (e) => {
+    e.preventDefault()
+    setAddClientLoading(true)
+    setAddClientError('')
+    setAddClientSuccess('')
+    try {
+      const res = await fetch(`${API_URL}/api/admin/cliente-especial`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(addClientForm)
+      })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Error al crear cliente especial')
+      }
+      // Refrescar ambas listas
+      fetchAllClients()
+      const updated = await fetch(`${API_URL}/api/admin/cliente-especial-activos`).then(r => r.json())
+      setSelectedClientsState(Array.isArray(updated) ? updated : [])
+      setAddClientSuccess('Cliente especial agregado correctamente')
+      setShowAddClientModal(false)
+      setAddClientForm({
+        razon_social: '', domicilio: '', ciudad: '', provincia: '', clase_fiscal: '', documento: '', tel: '', numero_cliente: ''
+      })
+    } catch (err) {
+      setAddClientError(err.message || 'Error al crear cliente especial')
+    } finally {
+      setAddClientLoading(false)
+    }
+  }
+
   const handleSelectedClient = (e) => {
     const value = e.target.value
     setAlternativeClientSelect(value)
@@ -67,7 +163,8 @@ export default function App () {
     }
     
     searchTimeoutRef.current = setTimeout(() => {
-      const selectedClient = selectedClients.find(client => client.id === value);
+      // Buscar por numero_cliente en vez de id
+      const selectedClient = selectedClientsState.find(client => String(client.numero_cliente) === String(value));
     
       if (selectedClient) { handleSecondClientSelect(selectedClient) } 
       else { alert('No se encontro cliente!') }
@@ -256,6 +353,23 @@ export default function App () {
     }, 500);
   }
 
+  // PATCH activar/desactivar cliente especial
+  const handleToggleActivado = async (cliente) => {
+    try {
+      await fetch(`${API_URL}/api/admin/cliente-especial/${cliente.id}/activado`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activado: !cliente.activado })
+      })
+      fetchAllClients()
+      // Refrescar lista de activados para el select
+      const updated = await fetch(`${API_URL}/api/admin/cliente-especial-activos`).then(r => r.json())
+      setSelectedClientsState(Array.isArray(updated) ? updated : [])
+    } catch (e) {
+      alert('Error al actualizar estado del cliente')
+    }
+  }
+
   if (printMode) {
     return (
       <PrintContainer data={data} selectedArticles={selectedArticles} />
@@ -282,17 +396,104 @@ export default function App () {
    
               <div className="flex h-[50px] items-center justify-center">
                 <label className="w-[120px]" htmlFor="search-2">Cliente alternativo:</label>
-                <select onChange={handleSelectedClient} value={alternativeClientSelect} disabled={!data.id} className={`${!data.id ? 'cursor-not-allowed' : ''}`}>
-                  <option value="" disabled>Seleccione una opcion</option>
-                  {selectedClients.map(client => (
-                    <option key={client.id} value={client.id}>{client.id} {client.razon_social}</option>
-                  ))}
-                </select>
-                {/* <input onChange={handleSelectedClient} className="w-[100px]" onKeyPress={handleSecondKeyPress} value={searchSecondTerm} id="search-2" type="text" /> */}
+                {(() => {
+                  // Deduplicate clients by numero_cliente para evitar warning de React
+                  const uniqueClients = Array.from(
+                    new Map(selectedClientsState.map(client => [client.numero_cliente, client])).values()
+                  );
+                  return (
+                    <select onChange={handleSelectedClient} value={alternativeClientSelect} disabled={!data.id} className={`${!data.id ? 'cursor-not-allowed' : ''}`}>
+                      <option value="" disabled>Seleccione una opcion</option>
+                      {uniqueClients.map(client => (
+                        <option key={client.numero_cliente} value={client.numero_cliente}>{client.numero_cliente} {client.razon_social}</option>
+                      ))}
+                    </select>
+                  );
+                })()}
+                {/* Botón para agregar cliente especial */}
+                <button
+                  type="button"
+                  className="ml-2 p-1 rounded-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-center"
+                  title="Agregar cliente especial"
+                  onClick={() => setShowAddClientModal(true)}
+                >
+                  <PlusIcon />
+                </button>
+                {/* Botón para administrar clientes especiales */}
+                <button
+                  type="button"
+                  className="ml-2 p-1 rounded-full bg-gray-600 hover:bg-gray-700 text-white flex items-center justify-center"
+                  title="Administrar clientes especiales"
+                  onClick={() => { setShowAdminModal(true); fetchAllClients(); }}
+                >
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                </button>
               </div>
             </div>
           </article>
         </section>
+
+        {/* Modal para agregar cliente especial */}
+        {showAddClientModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+            <div className="bg-white text-black rounded-lg p-8 w-[400px] relative">
+              <button className="absolute top-2 right-2 text-xl" onClick={() => setShowAddClientModal(false)}>×</button>
+              <h2 className="text-lg font-bold mb-4">Agregar Cliente Especial</h2>
+              <form onSubmit={handleAddClientSubmit} className="flex flex-col gap-3">
+                <input name="razon_social" value={addClientForm.razon_social} onChange={handleAddClientInputChange} placeholder="Razón social" required className="border p-2 rounded" />
+                <input name="domicilio" value={addClientForm.domicilio} onChange={handleAddClientInputChange} placeholder="Domicilio" required className="border p-2 rounded" />
+                <input name="ciudad" value={addClientForm.ciudad} onChange={handleAddClientInputChange} placeholder="Ciudad" required className="border p-2 rounded" />
+                <input name="provincia" value={addClientForm.provincia} onChange={handleAddClientInputChange} placeholder="Provincia" required className="border p-2 rounded" />
+                <input name="clase_fiscal" value={addClientForm.clase_fiscal} onChange={handleAddClientInputChange} placeholder="Clase fiscal" required className="border p-2 rounded" />
+                <input name="documento" value={addClientForm.documento} onChange={handleAddClientInputChange} placeholder="Documento" required className="border p-2 rounded" />
+                <input name="tel" value={addClientForm.tel} onChange={handleAddClientInputChange} placeholder="Teléfono" className="border p-2 rounded" />
+                <input name="numero_cliente" value={addClientForm.numero_cliente} onChange={handleAddClientInputChange} placeholder="Número cliente (opcional)" className="border p-2 rounded" />
+                {addClientError && <div className="text-red-600 text-sm">{addClientError}</div>}
+                {addClientSuccess && <div className="text-green-600 text-sm">{addClientSuccess}</div>}
+                <button type="submit" className="bg-green-600 text-white rounded p-2 mt-2" disabled={addClientLoading}>{addClientLoading ? 'Guardando...' : 'Guardar'}</button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de administración de clientes especiales */}
+        {showAdminModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+            <div className="bg-white text-black rounded-lg p-8 w-[600px] max-h-[80vh] overflow-y-auto relative">
+              <button className="absolute top-2 right-2 text-xl" onClick={() => setShowAdminModal(false)}>×</button>
+              <h2 className="text-lg font-bold mb-4">Administrar Clientes Especiales</h2>
+              {loadingAllClients ? <div>Cargando...</div> : errorAllClients ? <div className="text-red-600">{errorAllClients}</div> : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="text-left">N° Cliente</th>
+                      <th className="text-left">Razón Social</th>
+                      <th className="text-left">Estado</th>
+                      <th className="text-left">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allClients.map(cliente => (
+                      <tr key={cliente.id} className={cliente.activado ? '' : 'opacity-60'}>
+                        <td>{cliente.numero_cliente}</td>
+                        <td>{cliente.razon_social}</td>
+                        <td>{cliente.activado ? 'Activo' : 'Desactivado'}</td>
+                        <td>
+                          <button
+                            className={`rounded p-1 px-2 text-white ${cliente.activado ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+                            onClick={() => handleToggleActivado(cliente)}
+                          >
+                            {cliente.activado ? 'Desactivar' : 'Activar'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
 
         {/*Client data section*/}
         <section className="flex justify-around">
@@ -412,6 +613,8 @@ export default function App () {
           <button onClick={handlePrint} className="w-[100px] border rounded-xl hover:bg-[#283847] h-10 font-medium duration-300">Imprimir</button>
           <button onClick={handleReset} className="w-[100px] border rounded-xl hover:bg-[#283847] h-10 font-medium duration-300">Reset</button>
         </section>
+
+        <ImportarClientesExcel />
       </div>
     </main>
   )
