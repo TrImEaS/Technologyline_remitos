@@ -22,7 +22,7 @@ function ImportarClientesExcel() {
 
     try {
       const res = await fetch(
-        "http://localhost:808/api/admin/importar-clientes-excel",
+        "https://technologyline.com.ar/api/admin/importar-clientes-excel",
         {
           method: "POST",
           body: formData,
@@ -43,7 +43,7 @@ function ImportarClientesExcel() {
       pollingRef.current = setInterval(async () => {
         try {
           const resp = await fetch(
-            `http://localhost:808/api/admin/import-progress/${data.importId}`
+            `https://technologyline.com.ar/api/admin/import-progress/${data.importId}`
           );
           const prog = await resp.json();
           if (prog.ok) {

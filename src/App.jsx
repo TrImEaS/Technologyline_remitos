@@ -11,7 +11,7 @@ const PlusIcon = () => (
 const API_URL = //cambia según el entorno
   import.meta.env.MODE === "production"
     ? import.meta.env.VITE_API_URL_PROD
-    : import.meta.env.VITE_API_URL_DEV || "http://localhost:808";
+    : import.meta.env.VITE_API_URL_DEV;
 
 export default function App () {
   const searchTimeoutRef = useRef(null)
